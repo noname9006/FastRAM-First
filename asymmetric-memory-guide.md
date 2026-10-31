@@ -6,7 +6,7 @@ How to make Windows give programs fast (dual-channel) memory first and leave slo
 
 ## The problem
 
-You can never have too much memory, so people often install sticks of different sizes or an odd number of them, such as 16 + 32 GB or 3 × 16 GB. The memory controller then divides the address space into two zones:
+In some cases a system has an asymmetric memory setup, such as 3 × 16 GB. The memory controller then divides the address space into two zones:
 
 - **Dual-channel:** the capacity present in both channels. Data is interleaved between the channels.
 - **Single-channel:** the remainder in the channel that has more memory. Theoretical bandwidth here is half as high.

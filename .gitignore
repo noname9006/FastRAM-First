@@ -4,6 +4,7 @@ local/
 # Files the scripts generate; they describe one machine only
 *.csv
 *.png
+!docs/*.png
 SRAT.aml
 SRAT.bin
 acpi_tables/

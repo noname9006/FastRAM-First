@@ -1,8 +1,29 @@
 # FastRAM First
 
-Makes Windows use dual-channel memory first on asymmetric RAM setups (for example 16 + 32 GB or 3 × 16 GB). An ACPI SRAT table describes the fast and slow zones as two NUMA nodes, and [OpenCore](https://github.com/acidanthera/OpenCorePkg) injects it at boot. Windows files and the firmware are not changed.
+Makes Windows use dual-channel memory first on asymmetric RAM setups (for example 3 × 16 GB). An ACPI SRAT table describes the fast and slow zones as two NUMA nodes, and [OpenCore](https://github.com/acidanthera/OpenCorePkg) injects it at boot. Windows files and the firmware are not changed.
 
-**Guide:** [asymmetric-memory-guide.md](asymmetric-memory-guide.md)
+## The problem
+
+In some cases a system has an asymmetric memory setup, such as 3 × 16 GB. The memory controller then divides the address space into two zones:
+
+- **Dual-channel:** the capacity present in both channels. Data is interleaved between the channels.
+- **Single-channel:** the remainder in the channel that has more memory. Theoretical bandwidth here is half as high.
+
+Windows knows nothing about these zones and hands out pages from both of them mixed together. A program can get slow memory even while plenty of fast memory is free.
+
+## The result
+
+The top chart shows the order in which Windows hands out memory without the table, and the bottom chart shows it with the table. Grey marks the slow zone. Fast memory now goes out first and slow memory last, while the speed of each zone stays the same.
+
+![RAM speed from the first to the last chunk handed out, without and with SRAT](docs/srat-order-compare.png)
+
+## How to use it
+
+1. Measure the memory in Safe Mode with `membench_phys.py`.
+2. Build the table with `make_srat.py`.
+3. Inject `SRAT.aml` at boot with OpenCore and verify the result.
+
+**Before you start, read the full guide: [asymmetric-memory-guide.md](asymmetric-memory-guide.md)**
 
 ## Disclaimer
 
