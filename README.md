@@ -33,6 +33,31 @@ The top chart shows the order in which Windows hands out memory without the tabl
 
 ![RAM speed from the first to the last chunk handed out, without and with SRAT](docs/srat-order-compare.png)
 
+## Why bother if slow memory stays slow
+
+The table changes the order in which Windows hands out memory to programs, not the speed of the memory. Fast memory comes first, so it gets used more often, and slow memory is reached only when the fast zone runs out.
+
+This can help programs that are sensitive to memory bandwidth, such as LLM inference with partial GPU offload, as long as their data fits in the fast zone. Without the table, a program can land in slow memory even when it needs far less than the fast capacity.
+
+### Measured example: LLM inference
+
+On the test machine, generation became 0.4–2.9% faster with the table, and prompt processing did not change. The gain was largest in the setups with the most model data in system RAM.
+
+| Backend | Setup | Generation, tok/s: without → with table | Change | Prompt, tok/s: without → with table |
+|---|---|---|---|---|
+| ROCm | `-ngl 99 --n-cpu-moe 42 --ctx-checkpoints 0` | 20.89 → 21.49 | +2.9% | 175.1 → 174.9 |
+| ROCm | `--fit on --ctx-checkpoints 0` | 21.77 → 21.91 | +0.6% | 190.3 → 189.8 |
+| ROCm | `--fit on -fa auto` | 21.83 → 21.92 | +0.4% | 187.5 → 188.2 |
+| Vulkan | `-ngl 99 --n-cpu-moe 43 --ctx-checkpoints 0` | 22.32 → 22.96 | +2.9% | 58.0 → 58.2 |
+| Vulkan | `--fit on --ctx-checkpoints 0` | 23.08 → 23.30 | +1.0% | 59.8 → 60.0 |
+| Vulkan | `--fit on -fa auto` | 23.10 → 23.36 | +1.1% | 59.5 → 59.5 |
+
+- **Engine:** `llama-server` from llama.cpp, build b11840, on an AMD Radeon RX 6600 XT with 8 GB of VRAM.
+- **Model:** [`flint-UD-Q4_K_XL.gguf`](https://huggingface.co/unsloth/flint-GGUF/blob/main/flint-UD-Q4_K_XL.gguf) (25 GB). The process used about 23–24 GiB of system RAM, which fits in the fast zone.
+- **Common flags:** `-c 16384 -np 1 -fa on`, plus `-dev ROCm0` or `-dev Vulkan0`.
+- **Method:** 10 rounds of a 1,024-token prompt and 512 generated tokens, filling the context up to about 14k. The numbers are averages of rounds 2–10, because round 1 includes warm-up.
+- **Limits:** each setup ran once, and the runs with and without the table were separate sessions, so a 1–3% difference may include variation between sessions. Generation was faster with the table in 8 or 9 of the 9 rounds in every setup. Other applications and models may behave differently.
+
 ## How to use it
 
 1. Measure the memory in Safe Mode with `membench_phys.py`.

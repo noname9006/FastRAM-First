@@ -12,7 +12,7 @@ Related files in the `scripts` folder:
 One launch runs up to three measurements, in this order:
 
 1. **System order** (default, `--no-system-order` skips it). Ordinary memory (numpy arrays, demand-zero pages) is allocated and touched in chunks (`--order-chunk-mib`, default 256 MiB), the way any application gets memory. The chunks are then measured in the order the system handed them out, from the first to the last. This shows what a program actually sees when it asks the system for memory. It runs first, on a fresh memory state, and everything is released before the next step. Output: `<name>_system.csv`.
-2. **Physical map** (always). The script reads the physical memory map Windows manages (`HKLM\HARDWARE\RESOURCEMAP\System Resources\Physical Memory`), then takes as many physical pages as Windows will give through AWE (Address Windowing Extensions: `AllocateUserPhysicalPagesNuma`, `MapUserPhysicalPages`) and learns their physical addresses from the page frame numbers (PFN x 4096). Whatever it cannot obtain is reported as **occupied**: in use by the OS, drivers or other processes, or held back by `--reserve-gib`. The obtained pages are mapped sorted by physical address, the address space is split into bins (`--bin-mib`, default 256 MiB), and read / write / copy bandwidth is measured for the pages in each bin. The measurement is repeated `--runs` times over the same pages, so the occupied map is identical between the runs of one launch. Output: `<name>.csv` (one row per run and bin, for the **whole** address space, holes and occupied bins included).
+2. **Physical map** (always). The script reads the physical memory map Windows manages (`HKLM\HARDWARE\RESOURCEMAP\System Resources\Physical Memory`), then takes as many physical pages as Windows will give through AWE (Address Windowing Extensions: `AllocateUserPhysicalPagesNuma`, `MapUserPhysicalPages`) and learns their physical addresses from the page frame numbers (PFN x 4096). Whatever it cannot obtain is reported as **occupied**: in use by the OS, drivers or other processes, or held back by `--reserve`. The obtained pages are mapped sorted by physical address, the address space is split into bins (`--bin-mib`, default 256 MiB), and read / write / copy bandwidth is measured for the pages in each bin. The measurement is repeated `--runs` times over the same pages, so the occupied map is identical between the runs of one launch. Output: `<name>.csv` (one row per run and bin, for the **whole** address space, holes and occupied bins included).
 3. **AWE order** (optional, `--awe-order`). The AWE pages are mapped again in the order `AllocateUserPhysicalPagesNuma` returned them and measured per chunk, together with the physical address spread of every chunk. Output: `<name>_order.csv`. Note that this order is **not** the order ordinary memory is handed out in (measured on this setup: AWE gives a longer slow start and is more repeatable), so use the system-order test for "what does an application get".
 
 Measurement kernels (numpy, multi-threaded): read = `sum`, write = `fill`, copy = `copyto` of one half of the slice onto the other half. Copy counts read + write bytes (2x). Each bin or chunk is measured `--passes` times and the best pass is kept; the CSV `run` column holds the repeat.
@@ -56,7 +56,7 @@ All flags are optional.
 |---|---|---|
 | `--runs N` | 25 | Measurement repeats over the same pages (applies to every measurement). |
 | `--passes N` | 3 | Best-of passes per bin or chunk and run. |
-| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left available to the system. The script stops taking memory at this level (per NUMA node for AWE); the untaken part is reported as occupied. |
+| `--reserve N` | 256 | Safety margin: memory in MiB left available to the system. The script stops taking memory at this level (per NUMA node for AWE); the untaken part is reported as occupied. |
 | `--max-gib X` | none | Take at most X GiB (for a trial run). |
 | `--threads N` | CPU count | Worker threads for the measurement (a chunk or bin uses at most 1 thread per 16 MiB). |
 | `--bin-mib N` | 256 | Size of one physical-address bin of the physical map. |
@@ -72,7 +72,7 @@ All flags are optional.
 
 ## Output files
 
-Every CSV starts with `#` header lines: `created`, `boot_mode` (normal / safe / safe_network), `script`, `ram_visible_gib`, `available_before_gib`, `obtained_gib`, `occupied_gib`, `reserve_gib`, `bin_mib`, `runs`, `passes`, `min_tested_mib`, `numa_nodes`, `ranges_gib` (the physical RAM ranges), `smbios_dimmN`, `cpu`, and `note`. `_system.csv` and `_order.csv` additionally carry `view` and `order_chunk_mib` (and the order csv `node_order`, `boundary_gib`).
+Every CSV starts with `#` header lines: `created`, `boot_mode` (normal / safe / safe_network), `script`, `ram_visible_gib`, `available_before_gib`, `obtained_gib`, `occupied_gib`, `reserve_mib`, `bin_mib`, `runs`, `passes`, `min_tested_mib`, `numa_nodes`, `ranges_gib` (the physical RAM ranges), `smbios_dimmN`, `cpu`, and `note`. `_system.csv` and `_order.csv` additionally carry `view` and `order_chunk_mib` (and the order csv `node_order`, `boundary_gib`).
 
 **`<name>.csv`** - physical map, one row per (run, bin):
 
@@ -115,5 +115,5 @@ The chart of the physical map itself (speed per physical-address bin, with occup
 ## Caveats
 
 - AWE pages and ordinary pages are drawn from the same pool through different code paths, so the AWE order differs from the order an application gets. Use `_system.csv` for the latter.
-- `occupied_gib` includes the part kept back by `--reserve-gib` (and, with several NUMA nodes, allocation granularity), not only memory in use by the system; compare `ram_visible_gib - available_before_gib` for the memory really in use before the run.
+- `occupied_gib` includes the part kept back by `--reserve` (and, with several NUMA nodes, allocation granularity), not only memory in use by the system; compare `ram_visible_gib - available_before_gib` for the memory really in use before the run.
 - The slow/fast boundary and the speeds of the zones depend on the machine (DIMM population, BIOS options, FCLK).

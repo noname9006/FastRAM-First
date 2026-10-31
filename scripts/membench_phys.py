@@ -6,7 +6,7 @@ How it works
      i.e. every address range that is real RAM, holes included.
   2. Takes as many physical pages as Windows will give (AWE: AllocateUserPhysicalPagesNuma) and learns their real
      physical addresses from the page frame numbers. Whatever is NOT obtained is "occupied": in use by the OS, drivers
-     or other processes, or kept back by --reserve-gib. That part cannot be tested.
+     or other processes, or kept back by --reserve. That part cannot be tested.
   3. Maps the obtained pages sorted by physical address, splits the address space into bins (--bin-mib) and measures
      read / write / copy bandwidth of the pages that lie in each bin. --runs repeats the measurement without
      reallocating (the occupied map stays the same between runs of one launch).
@@ -332,7 +332,7 @@ def main():
     ap.add_argument("--bin-mib", type=int, default=256, help="size of one physical-address bin (default 256)")
     ap.add_argument("--runs", type=int, default=25, help="measurement repeats over the same pages (default 25)")
     ap.add_argument("--passes", type=int, default=3, help="best-of passes per bin and run (default 3)")
-    ap.add_argument("--reserve-gib", type=float, default=0.25, help="safety margin: memory left available to the system (default 0.25 = 256 MiB)")
+    ap.add_argument("--reserve", type=int, default=256, help="safety margin: memory in MiB left available to the system (default 256)")
     ap.add_argument("--max-gib", type=float, default=None, help="take at most this much (for a trial run)")
     ap.add_argument("--min-tested-mib", type=int, default=128,
                     help="measure a bin only if this much of it was obtained (default 128; smaller slices fit the CPU cache and read too fast)")
@@ -364,9 +364,9 @@ def main():
     hi = ctypes.c_ulong(0)
     k32.GetNumaHighestNodeNumber(ctypes.byref(hi))
     nodes = list(range(hi.value + 1)) if a.node_order == "low-first" else list(range(hi.value, -1, -1))
-    reserve = int(a.reserve_gib * GiB)
+    reserve = a.reserve * MiB
     cap = int(a.max_gib * GiB) // PAGE if a.max_gib else 1 << 60
-    print(f"NUMA nodes: {len(nodes)}; reserve {a.reserve_gib} GiB per node; taking pages ...", flush=True)
+    print(f"NUMA nodes: {len(nodes)}; reserve {a.reserve} MiB per node; taking pages ...", flush=True)
 
     system_rows, system_got = [], 0
     if not a.no_system_order:
@@ -489,7 +489,7 @@ def main():
             "available_before_gib": f"{avail0 / GiB:.3f}",
             "obtained_gib": f"{tested_total / GiB:.3f}",
             "occupied_gib": f"{(range_total - tested_total) / GiB:.3f}",
-            "reserve_gib": a.reserve_gib,
+            "reserve_mib": a.reserve,
             "bin_mib": a.bin_mib,
             "runs": a.runs,
             "passes": a.passes,

@@ -50,7 +50,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gib", type=float, default=None, help="take at most this much (default: all available memory)")
     ap.add_argument("--step-gib", type=float, default=2, help="size of one allocation step (default 2)")
-    ap.add_argument("--reserve-gib", type=float, default=0.25, help="safety margin: memory left available to the system (default 0.25 = 256 MiB)")
+    ap.add_argument("--reserve", type=int, default=256, help="safety margin: memory in MiB left available to the system (default 256)")
     args = ap.parse_args()
 
     hi = highest_node()
@@ -66,7 +66,7 @@ def main():
     step = int(args.step_gib * 2**30)
     total = 0
     while args.gib is None or total < args.gib * 2**30:
-        if sum(v for v in snapshot(hi) if v) < args.reserve_gib + args.step_gib:
+        if sum(v for v in snapshot(hi) if v) < args.reserve / 1024 + args.step_gib:
             print("Safety margin reached.")
             break
         buf = np.empty(step, dtype=np.uint8)

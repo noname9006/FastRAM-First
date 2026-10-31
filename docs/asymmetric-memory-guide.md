@@ -172,7 +172,7 @@ All flags are optional unless marked as required.
 |---|---|---|
 | `--runs N` | 25 | Repeats of each measurement. More runs give steadier results and take longer. |
 | `--passes N` | 3 | Passes per bin or chunk in each run; the best one is kept. |
-| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left to the system. A larger value is safer, but less memory gets tested. |
+| `--reserve N` | 256 | Safety margin: memory in MiB left to the system. A larger value is safer, but less memory gets tested. |
 | `--max-gib X` | none | Takes at most X GiB, for a trial run. Too little for finding the boundary. |
 | `--threads N` | CPU count | Worker threads for the measurement. |
 | `--bin-mib N` | 256 | Size of one physical-address bin. Smaller bins locate the boundary more precisely. |
@@ -211,7 +211,7 @@ All flags are optional unless marked as required.
 |---|---|---|
 | `--gib X` | all available memory | Takes at most X GiB. |
 | `--step-gib X` | 2 | Size of one allocation step. |
-| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left to the system. |
+| `--reserve N` | 256 | Safety margin: memory in MiB left to the system. |
 
 `srat_dump.py` has no flags.
 
