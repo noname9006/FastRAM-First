@@ -254,6 +254,6 @@ Windows has no built-in PowerShell command for this that we could find. Third-pa
 
 If you have an agent that can run commands on your computer (Claude Code, for example), give it this repository and write:
 
-> Read docs/asymmetric-memory-guide.md and walk me through the steps. First collect system data, read-only: processor, sticks, boot mode, Secure Boot, BitLocker, `truncatememory`. Tell me whether the machine is suitable. Do not run commands that change the boot process, BIOS or EFI partition yourself: show them to me and explain them. I will run the test in Safe Mode myself and give you the CSV. Show me the output of `make_srat.py` and explain why the boundary is plausible before going further.
+> Read docs/GUIDE.md and walk me through the steps. First collect system data, read-only: processor, sticks, boot mode, Secure Boot, BitLocker, `truncatememory`. Tell me whether the machine is suitable. Do not run commands that change the boot process, BIOS or EFI partition yourself: show them to me and explain them. I will run the test in Safe Mode myself and give you the CSV. Show me the output of `make_srat.py` and explain why the boundary is plausible before going further.
 
 Reboots, BIOS settings and boot changes are best done yourself: an agent cannot help if the system does not start, so keep this guide open on your phone beforehand.

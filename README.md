@@ -64,7 +64,7 @@ On the test machine, generation became 0.4–2.9% faster with the table, and pro
 2. Build the table with `make_srat.py`.
 3. Inject `SRAT.aml` at boot with OpenCore and verify the result.
 
-**Before you start, read the full guide: [docs/asymmetric-memory-guide.md](docs/asymmetric-memory-guide.md)**
+**Before you start, read the full guide: [docs/GUIDE.md](docs/GUIDE.md)**
 
 ## Disclaimer
 
