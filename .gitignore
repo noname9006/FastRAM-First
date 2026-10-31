@@ -1,0 +1,18 @@
+# Everything from the author's machine: results, SRAT table, OpenCore config, ACPI dumps
+local/
+
+# Files the scripts generate; they describe one machine only
+*.csv
+*.png
+SRAT.aml
+SRAT.bin
+acpi_tables/
+acpi_report.txt
+# Raw tables written by srat_dump.py
+*.bin
+
+# OpenCore setup, built for one machine
+EFI/
+config.plist
+
+__pycache__/
