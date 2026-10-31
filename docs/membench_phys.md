@@ -6,7 +6,6 @@ Related files in the `scripts` folder:
 
 - `membench_phys.py` - the benchmark (this document).
 - `membench_phys_order_plot.py` - chart of the `*_system.csv` / `*_order.csv` files (see [Charting](#charting)).
-- `membench.py` - the older virtual-memory benchmark (fast / deep modes, RAM and VRAM). `membench_phys.py` reuses its WMI / HWiNFO readers for the CSV header when they are available.
 
 ## What it measures
 
@@ -37,7 +36,7 @@ Run it in **Safe Mode (minimal)** so that almost nothing occupies memory:
 python scripts/membench_phys.py --runs 10 --note "SRAT=on DRAM Map Inversion=Auto 3733 CL16-19-19-39 FCLK1867"
 ```
 
-Normal mode works too, only more memory is occupied. HWiNFO and WMI are usually not available in Safe Mode; the header then says so and the SMBIOS lines still describe the DIMMs.
+Normal mode works too, only more memory is occupied.
 
 Quick trial (about a minute). With `--max-gib` the pages come scattered over the whole address space, so a trial needs `--min-tested-mib 16`:
 
@@ -71,7 +70,7 @@ All flags are optional.
 
 ## Output files
 
-Every CSV starts with `#` header lines: `created`, `boot_mode` (normal / safe / safe_network), `script`, `ram_visible_gib`, `available_before_gib`, `obtained_gib`, `occupied_gib`, `reserve_gib`, `bin_mib`, `runs`, `passes`, `min_tested_mib`, `numa_nodes`, `ranges_gib` (the physical RAM ranges), `smbios_dimmN`, `cpu`, WMI / HWiNFO readings when available, and `note`. `_system.csv` and `_order.csv` additionally carry `view` and `order_chunk_mib` (and the order csv `node_order`, `boundary_gib`).
+Every CSV starts with `#` header lines: `created`, `boot_mode` (normal / safe / safe_network), `script`, `ram_visible_gib`, `available_before_gib`, `obtained_gib`, `occupied_gib`, `reserve_gib`, `bin_mib`, `runs`, `passes`, `min_tested_mib`, `numa_nodes`, `ranges_gib` (the physical RAM ranges), `smbios_dimmN`, `cpu`, and `note`. `_system.csv` and `_order.csv` additionally carry `view` and `order_chunk_mib` (and the order csv `node_order`, `boundary_gib`).
 
 **`<name>.csv`** - physical map, one row per (run, bin):
 

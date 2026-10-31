@@ -1,6 +1,6 @@
 """
 srat_dump.py - read-only: shows which ACPI tables the firmware exposes and decodes SRAT/SLIT.
-Windows, Python 3, no admin rights needed. Writes nothing except the raw tables next to the script.
+Windows, Python 3, no admin rights needed. Writes nothing except the raw tables it finds, to the current folder.
 
 Usage:  python srat_dump.py
 """

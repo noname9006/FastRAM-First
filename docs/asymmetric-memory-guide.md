@@ -129,6 +129,14 @@ $n=0; [void][W.N]::GetNumaHighestNodeNumber([ref]$n); "highest node: $n"
 
 You should see `highest node: 1`, and the free memory of the nodes should roughly match the zones. If there is only one node, the table was not applied: either Windows started without going through OpenCore, or `config.plist` has an error.
 
+Optional quick check of the allocation order, in normal mode. Close heavy programs first, and set `--gib` above the size of node 0 (40 for the test machine):
+
+```
+python scripts/numa_check.py --gib 40
+```
+
+The script takes memory in 2 GiB steps and prints the free memory of each node after every step. Node 0 should drain first, and node 1 only after that.
+
 ## Step 6. Verify the result
 
 Again in Safe Mode, booted through OpenCore (Safe Mode is enabled the same way; the selection menu opens after OpenCore):

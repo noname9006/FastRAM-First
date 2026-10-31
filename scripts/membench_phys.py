@@ -16,7 +16,7 @@ How it works
      memory (numpy arrays) is allocated and touched in --order-chunk-mib chunks, the way any program gets memory, and the
      chunks are measured in the order the system handed them out, from the first to the last. Written to
      <name>_system.csv (one row per run and chunk) so the speed can be charted from the start to the end of what a
-     program gets. Skip it with --no-system-order. This is the same method as membench.py deep.
+     program gets. Skip it with --no-system-order.
   6. Optional (--awe-order): maps the AWE pages again in the order AllocateUserPhysicalPagesNuma returned them and
      measures per chunk, written to <name>_order.csv together with the physical address spread of each chunk. That order
      is NOT the order ordinary memory is handed out in (measured: AWE gives a longer slow start and is more repeatable).
@@ -25,7 +25,7 @@ Run it in Safe Mode (minimal) so that almost nothing occupies memory:
   - Settings > Recovery > Advanced startup > Restart now > Troubleshoot > Advanced options > Startup Settings >
     Restart > press 4 (Safe Mode).  Or: msconfig > Boot > Safe boot > Minimal, reboot (untick it afterwards!).
   - Open a console as the same user that has "Lock pages in memory", run:  python membench_phys.py
-  - HWiNFO and WMI are usually not available in Safe Mode; DIMM slots and MT/s are still read from SMBIOS (no driver needed).
+  - DIMM slots and MT/s are read from SMBIOS (no driver needed).
     FCLK and timings need a driver, so pass them by hand:  --note "CL16-19-19-39 1T tRC87 tRFC653 FCLK1867"
 Normal mode works too, only more memory is occupied.
 Note: with --max-gib the pages come scattered over the whole address space, so a trial needs --min-tested-mib 16:
@@ -278,7 +278,7 @@ def find_boundary(pts):
 
 
 def smbios_dimms():
-    """DIMM slots from the SMBIOS table (type 17): works without WMI, HWiNFO or any driver, also in Safe Mode."""
+    """DIMM slots from the SMBIOS table (type 17): works without any driver, also in Safe Mode."""
     k32.GetSystemFirmwareTable.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p, ctypes.c_uint32]
     k32.GetSystemFirmwareTable.restype = ctypes.c_uint32
     sig = struct.unpack(">I", b"RSMB")[0]
@@ -317,33 +317,11 @@ def system_info():
     except Exception as e:
         info["smbios"] = f"not available ({e.__class__.__name__})"
     try:
-        import platform
-        info["cpu"] = platform.processor()
-    except Exception:
-        pass
-    try:
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        import membench as mb          # reuses the WMI / HWiNFO readers of membench.py
-        try:
-            info["cpu"] = mb._cpu_name() or info.get("cpu", "")
-        except Exception:
-            pass
-        try:
-            for i, (slot, gib, speed, part) in enumerate(mb._wmi_dimms()):
-                info[f"dimm{i}"] = f"{slot} | {gib:.0f} GiB | {speed} MT/s | {part}"
-        except Exception as e:
-            info["dimms"] = f"not available ({e.__class__.__name__})"
-        try:
-            hw = mb._hwinfo_readings()
-            if hw is None:
-                info["hwinfo"] = "not available"
-            else:
-                for k, (v, u) in hw.items():
-                    info["hwinfo " + k] = f"{v:g} {u}".strip()
-        except Exception as e:
-            info["hwinfo"] = f"not available ({e.__class__.__name__})"
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0") as k:
+            info["cpu"] = winreg.QueryValueEx(k, "ProcessorNameString")[0].strip()
     except Exception as e:
-        info["membench_helpers"] = f"not available ({e.__class__.__name__})"
+        info["cpu"] = f"not available ({e.__class__.__name__})"
     return info
 
 
@@ -499,12 +477,7 @@ def main():
             cnt = ctypes.c_size_t(len(p))
             k32.FreeUserPhysicalPages(proc, ctypes.byref(cnt), p.ctypes.data)
 
-    import threading
-    box = {}
-    th = threading.Thread(target=lambda: box.update(system_info()), daemon=True)
-    th.start()
-    th.join(30)                                   # WMI / HWiNFO can hang in Safe Mode; never lose the measurement for it
-    info = dict(box) if not th.is_alive() else {**box, "system_info": "timed out"}
+    info = system_info()
     tested_total = sum(x["tested"] for x in bins)
     range_total = sum(x["range"] for x in bins)
     with open(out, "w", encoding="utf8", newline="\n") as f:

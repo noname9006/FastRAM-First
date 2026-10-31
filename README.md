@@ -63,8 +63,7 @@ Everything was run and checked on this one machine only. Results on other hardwa
 | `scripts/membench_phys.py` | Measures memory speed along physical addresses and allocation order ([docs](docs/membench_phys.md)) |
 | `scripts/membench_phys_order_plot.py` | Charts the allocation order results |
 | `scripts/make_srat.py` | Builds `SRAT.aml` from the measurements |
-| `scripts/membench.py` | Older virtual-memory benchmark for RAM and VRAM; `scripts/membench_phys.py` reuses its hardware readers |
-| `scripts/acpi_collect.py`, `scripts/srat_dump.py` | Read-only ACPI diagnostics |
+| `scripts/srat_dump.py` | Read-only check: which ACPI tables the firmware exposes, and the contents of SRAT and SLIT |
 | `scripts/numa_check.py` | Shows which NUMA node Windows takes memory from first |
 
 ## Requirements

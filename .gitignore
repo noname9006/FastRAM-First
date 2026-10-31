@@ -7,8 +7,6 @@ local/
 !docs/*.png
 SRAT.aml
 SRAT.bin
-acpi_tables/
-acpi_report.txt
 # Raw tables written by srat_dump.py
 *.bin
 
