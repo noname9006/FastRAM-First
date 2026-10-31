@@ -13,15 +13,17 @@ Windows knows nothing about these zones and hands out pages from both of them mi
 
 ## What NUMA is
 
-NUMA (Non-Uniform Memory Access) is a way to describe a computer whose memory is not equally fast for every processor core. Cores and memory are grouped into nodes. The firmware reports the nodes to the operating system in an ACPI table called SRAT. By default, the operating system then tries to give a program memory from the node closest to the core it runs on, and uses other nodes only when that memory runs out.
+NUMA (Non-Uniform Memory Access) describes a computer in which each processor reaches some memory faster than other memory. Processors and memory are grouped into nodes. An ACPI table called SRAT describes which processors and memory belong together. According to [Microsoft](https://learn.microsoft.com/en-us/windows/win32/procthread/numa-support), Windows tries to satisfy a memory request from within the node, and allocates from other nodes if necessary.
 
-That allocation order is what this project relies on: if the fast memory and all the cores form one node, and the slow memory forms another, fast memory goes out first.
+That behavior is what this project relies on: if the fast memory and all the cores form one node, and the slow memory forms another, fast memory goes out first. The charts below show this on the test machine.
 
 ## Why this takes a workaround
 
-Linux can emulate NUMA nodes with a kernel boot parameter (`numa=fake`, on kernels built with NUMA emulation support), so no firmware table is needed there.
+Linux has a documented kernel boot parameter for emulating NUMA nodes: [`numa=fake`](https://docs.kernel.org/admin-guide/kernel-parameters.html), which [requires `CONFIG_NUMA_EMU`](https://docs.kernel.org/next/mm/numa_emulation.html). This project did not test it.
 
-Windows has no such option. It only sees the nodes that the firmware reports, and a typical desktop system reports none. So the node layout has to come from a custom SRAT table, injected before Windows starts by a boot loader.
+Windows has no equivalent for this purpose, as far as the documentation shows. Its closest option is [`bcdedit /set groupsize`](https://learn.microsoft.com/en-us/windows-hardware/drivers/devtest/boot-parameters-to-test-drivers-for-multiple-processor-group-support), which is meant for testing and not for shipping systems. It creates a node for each processor group, based on processor counts, and the documentation gives no way to choose which physical memory goes into a node.
+
+The firmware of the test machine has no SRAT table. So the node layout comes from a custom SRAT table, injected by a boot loader before Windows starts. On the test machine, Windows then reports two nodes.
 
 ## The result
 

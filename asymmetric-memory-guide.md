@@ -27,12 +27,12 @@ So a program that needed 10 GiB got almost nothing but slow memory, even though 
 
 Make fast memory go out first and slow memory last.
 
-The physical addresses of the zones cannot be changed, because the BIOS sets them. The order of allocation can be changed, though. Windows takes memory first from the NUMA node closest to the processor, and only then from other nodes. So you declare:
+The physical addresses of the zones cannot be changed, because the BIOS sets them. The order of allocation can be changed, though. Windows [tries to allocate memory from within the NUMA node, and uses other nodes if necessary](https://learn.microsoft.com/en-us/windows/win32/procthread/numa-support). So you declare:
 
 - **Node 0:** all cores and the fast memory.
 - **Node 1:** only the slow memory, with no cores.
 
-**The obstacle:** a desktop processor with a single memory die has no NUMA by default. The firmware has no SRAT table to describe the nodes, and the BIOS usually has no such setting either. So you create the table yourself and inject it at boot with the [OpenCore](https://github.com/acidanthera/OpenCorePkg) boot loader, which can add ACPI tables before Windows starts. Windows files and the firmware are not changed.
+**The obstacle:** Windows treats a non-NUMA computer as one node. The firmware of the test machine has no SRAT table to describe nodes (check yours with `srat_dump.py`). So you create the table yourself and inject it at boot with the [OpenCore](https://github.com/acidanthera/OpenCorePkg) boot loader, which can add ACPI tables before Windows starts. Windows files and the firmware are not changed.
 
 SRAT forbids nothing: all cores still see all memory. It is only a hint for allocation.
 
