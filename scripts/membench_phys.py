@@ -330,9 +330,9 @@ def main():
         sys.exit("Windows only")
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--bin-mib", type=int, default=256, help="size of one physical-address bin (default 256)")
-    ap.add_argument("--runs", type=int, default=5, help="measurement repeats over the same pages (default 5)")
+    ap.add_argument("--runs", type=int, default=25, help="measurement repeats over the same pages (default 25)")
     ap.add_argument("--passes", type=int, default=3, help="best-of passes per bin and run (default 3)")
-    ap.add_argument("--reserve-gib", type=float, default=0.25, help="memory left available to the system (default 0.25)")
+    ap.add_argument("--reserve-gib", type=float, default=0.25, help="safety margin: memory left available to the system (default 0.25 = 256 MiB)")
     ap.add_argument("--max-gib", type=float, default=None, help="take at most this much (for a trial run)")
     ap.add_argument("--min-tested-mib", type=int, default=128,
                     help="measure a bin only if this much of it was obtained (default 128; smaller slices fit the CPU cache and read too fast)")

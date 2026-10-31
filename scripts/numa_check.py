@@ -7,8 +7,8 @@ numa_check.py - shows how Windows sees the two memory nodes and which node it ta
    only afterwards, the SRAT trick works.
 
 Needs: pip install numpy
-Usage: python numa_check.py            (allocates up to 24 GiB)
-       python numa_check.py --gib 40   (go past the size of node 0 to see the spill into node 1)
+Usage: python numa_check.py            (takes all available memory except the safety margin)
+       python numa_check.py --gib 40   (takes at most 40 GiB)
 Close big programs first. Memory is released when the script exits.
 """
 import argparse
@@ -48,8 +48,9 @@ def main():
     if sys.platform != "win32":
         sys.exit("Windows only")
     ap = argparse.ArgumentParser()
-    ap.add_argument("--gib", type=float, default=24)
-    ap.add_argument("--step-gib", type=float, default=2)
+    ap.add_argument("--gib", type=float, default=None, help="take at most this much (default: all available memory)")
+    ap.add_argument("--step-gib", type=float, default=2, help="size of one allocation step (default 2)")
+    ap.add_argument("--reserve-gib", type=float, default=0.25, help="safety margin: memory left available to the system (default 0.25 = 256 MiB)")
     args = ap.parse_args()
 
     hi = highest_node()
@@ -64,7 +65,10 @@ def main():
     held = []
     step = int(args.step_gib * 2**30)
     total = 0
-    while total < args.gib * 2**30:
+    while args.gib is None or total < args.gib * 2**30:
+        if sum(v for v in snapshot(hi) if v) < args.reserve_gib + args.step_gib:
+            print("Safety margin reached.")
+            break
         buf = np.empty(step, dtype=np.uint8)
         buf[:] = 1  # touch every page
         held.append(buf)

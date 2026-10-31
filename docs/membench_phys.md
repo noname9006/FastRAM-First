@@ -33,8 +33,10 @@ Run it in **Safe Mode (minimal)** so that almost nothing occupies memory:
 - Open a console as the same user that has "Lock pages in memory" and run:
 
 ```
-python scripts/membench_phys.py --runs 10 --note "SRAT=on DRAM Map Inversion=Auto 3733 CL16-19-19-39 FCLK1867"
+python scripts/membench_phys.py
 ```
+
+To record timings and BIOS options in the CSV header, add `--note`, for example `--note "SRAT=on DRAM Map Inversion=Auto 3733 CL16-19-19-39 FCLK1867"`.
 
 Normal mode works too, only more memory is occupied.
 
@@ -44,7 +46,7 @@ Quick trial (about a minute). With `--max-gib` the pages come scattered over the
 python scripts/membench_phys.py --max-gib 3 --runs 1 --min-tested-mib 16
 ```
 
-Time: one run takes roughly 12-18 s per 40 GiB for each of the two default measurements; with the default 5 runs a launch takes a few minutes.
+Time: one run takes roughly 12-18 s per 40 GiB for each of the two default measurements; with the default 25 runs a launch took about 12 minutes on the test machine.
 
 ## Flags
 
@@ -52,9 +54,9 @@ All flags are optional.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--runs N` | 5 | Measurement repeats over the same pages (applies to every measurement). |
+| `--runs N` | 25 | Measurement repeats over the same pages (applies to every measurement). |
 | `--passes N` | 3 | Best-of passes per bin or chunk and run. |
-| `--reserve-gib X` | 0.25 | Memory left available to the system. The script stops taking memory at this level (per NUMA node for AWE); the untaken part is reported as occupied. |
+| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left available to the system. The script stops taking memory at this level (per NUMA node for AWE); the untaken part is reported as occupied. |
 | `--max-gib X` | none | Take at most X GiB (for a trial run). |
 | `--threads N` | CPU count | Worker threads for the measurement (a chunk or bin uses at most 1 thread per 16 MiB). |
 | `--bin-mib N` | 256 | Size of one physical-address bin of the physical map. |

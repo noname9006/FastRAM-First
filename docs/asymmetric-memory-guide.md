@@ -71,8 +71,10 @@ The speed of the zones themselves does not change. What changes is which memory 
 Boot into Safe Mode: Settings > Recovery > Advanced startup > Troubleshoot > Advanced options > Startup Settings > press `4`. Run:
 
 ```
-python scripts/membench_phys.py --runs 5 --note "without SRAT"
+python scripts/membench_phys.py
 ```
+
+With the defaults this takes about 12 minutes on the test machine (25 runs). All flags are listed in [Script flags](#script-flags).
 
 This produces, in the `scripts` folder, `membench_phys_<time>.csv` (the physical map) and `..._system.csv` (the allocation order). Details are in [membench_phys.md](membench_phys.md). Keep these files: they are your "before" state.
 
@@ -81,10 +83,10 @@ This produces, in the `scripts` folder, `membench_phys_<time>.csv` (the physical
 In the same Safe Mode session, right after the measurement:
 
 ```
-python scripts/make_srat.py --csv scripts/membench_phys_<time>.csv --out SRAT.aml
+python scripts/make_srat.py --csv scripts/membench_phys_<time>.csv
 ```
 
-The script finds the boundary from the read speed and reads the list of cores and the memory ranges from the system. It should report something like: `boundary 17 GiB, slow zone below it; 12 logical CPUs; 640 bytes`.
+`--csv` is required here because it names your measurement. The table is written to `SRAT.aml` in the current folder. The script finds the boundary from the read speed and reads the list of cores and the memory ranges from the system. It should report something like: `boundary 17 GiB, slow zone below it; 12 logical CPUs; 640 bytes`.
 
 Sanity-check the result: the size of the slow zone should roughly equal the difference between the channel capacities.
 
@@ -129,10 +131,10 @@ $n=0; [void][W.N]::GetNumaHighestNodeNumber([ref]$n); "highest node: $n"
 
 You should see `highest node: 1`, and the free memory of the nodes should roughly match the zones. If there is only one node, the table was not applied: either Windows started without going through OpenCore, or `config.plist` has an error.
 
-Optional quick check of the allocation order, in normal mode. Close heavy programs first, and set `--gib` above the size of node 0 (40 for the test machine):
+Optional quick check of the allocation order, in normal mode. Close heavy programs first: by default the script takes all available memory except a 256 MiB safety margin, so the system may slow down while it runs.
 
 ```
-python scripts/numa_check.py --gib 40
+python scripts/numa_check.py
 ```
 
 The script takes memory in 2 GiB steps and prints the free memory of each node after every step. Node 0 should drain first, and node 1 only after that.
@@ -142,11 +144,11 @@ The script takes memory in 2 GiB steps and prints the free memory of each node a
 Again in Safe Mode, booted through OpenCore (Safe Mode is enabled the same way; the selection menu opens after OpenCore):
 
 ```
-python scripts/membench_phys.py --runs 5 --note "with SRAT"
-python scripts/membench_phys_order_plot.py scripts/<before>_system.csv scripts/<after>_system.csv --labels "Without SRAT" "With SRAT" --out compare.png
+python scripts/membench_phys.py
+python scripts/membench_phys_order_plot.py scripts/<before>_system.csv scripts/<after>_system.csv
 ```
 
-In `compare.png`, the grey (slow) area of the SRAT variant should be one block at the end. The threshold is found automatically from the data; you can set it with `--slow-read` if needed.
+The chart is written to `membench-phys-order.png` in the current folder. The grey (slow) area of the second panel (with SRAT) should be one block at the end. The threshold is found automatically from the data; you can set it with `--slow-read` if needed.
 
 ## Step 7. Make it permanent
 
@@ -158,6 +160,59 @@ Only when everything works from the USB drive:
 4. Unmount the partition: `mountvol S: /D`.
 
 Windows updates and BIOS resets can put Windows Boot Manager back in first place. The table then silently disappears, and the system works as it did before. If the speed starts to vary again, check with the command from step 5 first.
+
+## Script flags
+
+All flags are optional unless marked as required.
+
+**`membench_phys.py`** (full details in [membench_phys.md](membench_phys.md))
+
+| Flag | Default | What it affects |
+|---|---|---|
+| `--runs N` | 25 | Repeats of each measurement. More runs give steadier results and take longer. |
+| `--passes N` | 3 | Passes per bin or chunk in each run; the best one is kept. |
+| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left to the system. A larger value is safer, but less memory gets tested. |
+| `--max-gib X` | none | Takes at most X GiB, for a trial run. Too little for finding the boundary. |
+| `--threads N` | CPU count | Worker threads for the measurement. |
+| `--bin-mib N` | 256 | Size of one physical-address bin. Smaller bins locate the boundary more precisely. |
+| `--min-tested-mib N` | 128 | Skips a bin or chunk with less memory than this, because small slices fit in the CPU cache and read too fast. |
+| `--order-chunk-mib N` | 256 | Chunk size of the allocation-order tests. |
+| `--no-system-order` | off | Skips the allocation-order test and its `_system.csv`. |
+| `--awe-order` | off | Also measures the AWE allocation order and writes `_order.csv`. |
+| `--node-order low-first / high-first` | `low-first` | Which NUMA node AWE asks for pages first. |
+| `--boundary-gib X` | detected | Boundary used for the `_order.csv` statistics. |
+| `--note "text"` | empty | Free text for the CSV header, such as timings or BIOS options. |
+| `--out path.csv` | `membench_phys_<time>.csv` next to the script | Path of the main CSV. |
+
+**`make_srat.py`**
+
+| Flag | Default | What it affects |
+|---|---|---|
+| `--csv path` | required, unless both flags below are given | Main CSV of `membench_phys.py`; the boundary is found from it. |
+| `--boundary-gib X` | none | Sets the boundary by hand. Use it only with `--slow` and only if the boundary is real. |
+| `--slow below / above` | none | Which side of the boundary is the slow zone. |
+| `--out path` | `SRAT.aml` | Output file. |
+
+**`membench_phys_order_plot.py`**
+
+| Flag | Default | What it affects |
+|---|---|---|
+| `csv ...` | required | One or more `_system.csv` or `_order.csv` files; one panel each. |
+| `--labels L1 L2 ...` | file names | Panel titles. |
+| `--out file.png` | `membench-phys-order.png` | Output image. |
+| `--title "text"` | built-in title | Figure title. |
+| `--slow-read X` | found from the data | Shades a chunk when its median read speed in GB/s is below X. |
+| `--slow-pct X` | 50 | `_order.csv` only: shades a chunk when more than X % of its pages lie below the boundary. |
+
+**`numa_check.py`**
+
+| Flag | Default | What it affects |
+|---|---|---|
+| `--gib X` | all available memory | Takes at most X GiB. |
+| `--step-gib X` | 2 | Size of one allocation step. |
+| `--reserve-gib X` | 0.25 (256 MiB) | Safety margin: memory left to the system. |
+
+`srat_dump.py` has no flags.
 
 ## BIOS settings that affect the result
 
@@ -181,6 +236,18 @@ To undo everything, boot through Windows Boot Manager and delete `S:\EFI\OC` and
 - Programs that manage NUMA themselves may behave differently. A process cannot be bound to node 1 because it has no cores (`start /node 1` will not work).
 - The allocation order was tested for one large program on a clean system. How the file cache and several programs behave over long use was not measured.
 - The script does not yet support processors with x2APIC: it stops with an error. Systems whose firmware already has its own SRAT (Threadripper, EPYC, multi-processor) are not suitable. Multi-die Ryzen processors with one memory controller should work but were not tested. Linux and other operating systems were not tested.
+
+### Standby cache
+
+Windows keeps recently used file data in RAM as the standby list, so that it does not have to read that data from the disk again. These pages [count as available memory](https://techcommunity.microsoft.com/blog/askperf/finally-a-windows-task-manager-performance-tab-blog/375332), and the memory manager reuses them when something else needs RAM.
+
+The cache may therefore occupy part of the fast zone before you start a memory-hungry program, which would push that program toward the slow zone sooner. This is an expectation based on the allocation order, and it was not measured. How Windows chooses between standby pages in node 0 and free pages in node 1 was not measured either. For how the memory manager works in general, see chapter 5 of [Windows Internals, 7th edition, Part 1](https://learn.microsoft.com/en-us/sysinternals/resources/windows-internals).
+
+Do not try to keep the standby cache permanently empty: data that has left it must be read from the SSD or HDD again, which increases disk load.
+
+If you want to test it, you can empty the list once, right before starting such a program. Open [RAMMap](https://learn.microsoft.com/en-us/sysinternals/downloads/rammap) from Microsoft Sysinternals and select Empty > Empty Standby List. The effect is temporary, because Windows fills the cache again as files are read. This step was not tested with the SRAT table.
+
+Windows has no built-in PowerShell command for this that we could find. Third-party tools and scripts rely on an undocumented system call, so this guide does not recommend them.
 
 ## Going through this with an AI agent
 
