@@ -60,9 +60,10 @@ The speed of the zones themselves does not change. What changes is which memory 
 ## Step 1. Prepare
 
 1. Finalize your memory setup: XMP/DOCP, frequency and BIOS options. Changing any of them can shift the zones, and the table will have to be created again.
-2. Check that the system sees all the memory. Run `bcdedit` in an administrator console. If there is a `truncatememory` line, remove it with `bcdedit /deletevalue truncatememory` and reboot.
-3. Give your account the "Lock pages in memory" right: `secpol.msc` > Local Policies > User Rights Assignment > "Lock pages in memory". Log off and on again. Windows Home has no `secpol.msc`, so you will need another way to grant the right.
-4. Disable Secure Boot in the BIOS: OpenCore is not signed.
+2. Test the memory for stability with a long run, preferably several hours. Unstable memory can distort the measurements and corrupt data. We recommend [TestMem5](https://testmem.tz.ru/) with the [`extreme@anta777` preset](https://github.com/integralfx/MemTestHelper/blob/oc-guide/TM5-Configs/extreme%40anta777.cfg). Fix any errors before you continue.
+3. Check that the system sees all the memory. Run `bcdedit` in an administrator console. If there is a `truncatememory` line, remove it with `bcdedit /deletevalue truncatememory` and reboot.
+4. Give your account the "Lock pages in memory" right: `secpol.msc` > Local Policies > User Rights Assignment > "Lock pages in memory". Log off and on again. Windows Home has no `secpol.msc`, so you will need another way to grant the right.
+5. Disable Secure Boot in the BIOS: OpenCore is not signed.
 
 ## Step 2. Find the zone boundary
 
