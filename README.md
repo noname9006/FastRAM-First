@@ -37,7 +37,7 @@ The top chart shows the order in which Windows hands out memory without the tabl
 2. Build the table with `make_srat.py`.
 3. Inject `SRAT.aml` at boot with OpenCore and verify the result.
 
-**Before you start, read the full guide: [asymmetric-memory-guide.md](asymmetric-memory-guide.md)**
+**Before you start, read the full guide: [docs/asymmetric-memory-guide.md](docs/asymmetric-memory-guide.md)**
 
 ## Disclaimer
 
@@ -58,12 +58,12 @@ Everything was run and checked on this one machine only. Results on other hardwa
 
 | File | Purpose |
 |---|---|
-| `membench_phys.py` | Measures memory speed along physical addresses and allocation order ([docs](membench_phys.md)) |
-| `membench_phys_order_plot.py` | Charts the allocation order results |
-| `make_srat.py` | Builds `SRAT.aml` from the measurements |
-| `membench.py` | Older virtual-memory benchmark for RAM and VRAM; `membench_phys.py` reuses its hardware readers |
-| `acpi_collect.py`, `srat_dump.py` | Read-only ACPI diagnostics |
-| `numa_check.py` | Shows which NUMA node Windows takes memory from first |
+| `scripts/membench_phys.py` | Measures memory speed along physical addresses and allocation order ([docs](docs/membench_phys.md)) |
+| `scripts/membench_phys_order_plot.py` | Charts the allocation order results |
+| `scripts/make_srat.py` | Builds `SRAT.aml` from the measurements |
+| `scripts/membench.py` | Older virtual-memory benchmark for RAM and VRAM; `scripts/membench_phys.py` reuses its hardware readers |
+| `scripts/acpi_collect.py`, `scripts/srat_dump.py` | Read-only ACPI diagnostics |
+| `scripts/numa_check.py` | Shows which NUMA node Windows takes memory from first |
 
 ## Requirements
 

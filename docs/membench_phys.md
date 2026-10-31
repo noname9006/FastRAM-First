@@ -2,7 +2,7 @@
 
 RAM bandwidth measured along **physical addresses** and along the **order in which the system hands memory out**, with the memory that could not be tested (occupied by the OS, drivers, other processes, or kept back as reserve) reported separately. Windows only.
 
-Related files in this folder:
+Related files in the `scripts` folder:
 
 - `membench_phys.py` - the benchmark (this document).
 - `membench_phys_order_plot.py` - chart of the `*_system.csv` / `*_order.csv` files (see [Charting](#charting)).
@@ -34,7 +34,7 @@ Run it in **Safe Mode (minimal)** so that almost nothing occupies memory:
 - Open a console as the same user that has "Lock pages in memory" and run:
 
 ```
-python membench_phys.py --runs 10 --note "SRAT=on DRAM Map Inversion=Auto 3733 CL16-19-19-39 FCLK1867"
+python scripts/membench_phys.py --runs 10 --note "SRAT=on DRAM Map Inversion=Auto 3733 CL16-19-19-39 FCLK1867"
 ```
 
 Normal mode works too, only more memory is occupied. HWiNFO and WMI are usually not available in Safe Mode; the header then says so and the SMBIOS lines still describe the DIMMs.
@@ -42,7 +42,7 @@ Normal mode works too, only more memory is occupied. HWiNFO and WMI are usually 
 Quick trial (about a minute). With `--max-gib` the pages come scattered over the whole address space, so a trial needs `--min-tested-mib 16`:
 
 ```
-python membench_phys.py --max-gib 3 --runs 1 --min-tested-mib 16
+python scripts/membench_phys.py --max-gib 3 --runs 1 --min-tested-mib 16
 ```
 
 Time: one run takes roughly 12-18 s per 40 GiB for each of the two default measurements; with the default 5 runs a launch takes a few minutes.
@@ -97,7 +97,7 @@ Every CSV starts with `#` header lines: `created`, `boot_mode` (normal / safe / 
 `membench_phys_order_plot.py` draws read and write along the allocation order (line = median over the runs, pale band = min-max across runs), one panel per file. For `_system.csv` a chunk is shaded grey when its median read speed is below a threshold found from the data (midpoint of the 5th and 95th percentiles; no shading when they differ by less than 15%); for `_order.csv` the shading follows `pct_below_boundary` and a strip under the panel shows the physical address of every chunk's pages.
 
 ```
-python membench_phys_order_plot.py a_system.csv b_system.csv --labels "A" "B" --out compare.png
+python scripts/membench_phys_order_plot.py a_system.csv b_system.csv --labels "A" "B" --out compare.png
 ```
 
 | Flag | Default | Meaning |

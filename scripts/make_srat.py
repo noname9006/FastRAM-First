@@ -2,7 +2,7 @@
 make_srat.py - builds an ACPI SRAT table that splits memory into a fast and a slow NUMA node (Windows, read-only for the system).
 
 All CPUs and the fast zone go to node 0, the slow zone to node 1. Windows then hands out node 0 memory first.
-The result is a file; inject it with OpenCore (ACPI > Add). See asymmetric-memory-guide.md.
+The result is a file; inject it with OpenCore (ACPI > Add). See docs/asymmetric-memory-guide.md.
 
 Usage: python make_srat.py --csv membench_phys_XXXX.csv --out SRAT.aml      (finds the boundary in the physical map)
        python make_srat.py --boundary-gib 17 --slow below --out SRAT.aml    (set it by hand)

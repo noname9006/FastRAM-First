@@ -32,7 +32,7 @@ The physical addresses of the zones cannot be changed, because the BIOS sets the
 - **Node 0:** all cores and the fast memory.
 - **Node 1:** only the slow memory, with no cores.
 
-**The obstacle:** Windows treats a non-NUMA computer as one node. The firmware of the test machine has no SRAT table to describe nodes (check yours with `srat_dump.py`). So you create the table yourself and inject it at boot with the [OpenCore](https://github.com/acidanthera/OpenCorePkg) boot loader, which can add ACPI tables before Windows starts. Windows files and the firmware are not changed.
+**The obstacle:** Windows treats a non-NUMA computer as one node. The firmware of the test machine has no SRAT table to describe nodes (check yours with `scripts/srat_dump.py`). So you create the table yourself and inject it at boot with the [OpenCore](https://github.com/acidanthera/OpenCorePkg) boot loader, which can add ACPI tables before Windows starts. Windows files and the firmware are not changed.
 
 SRAT forbids nothing: all cores still see all memory. It is only a hint for allocation.
 
@@ -52,7 +52,7 @@ The speed of the zones themselves does not change. What changes is which memory 
 
 - Windows 10 or 11, 64-bit, booting in UEFI mode.
 - Python 3 and `pip install numpy matplotlib`.
-- Files from this repository: `membench_phys.py`, `membench_phys_order_plot.py`, `make_srat.py`.
+- Files from this repository: the `scripts` folder.
 - An [OpenCore release](https://github.com/acidanthera/OpenCorePkg/releases) and a plist editor ([ProperTree](https://github.com/corpnewt/ProperTree)).
 - A FAT32 USB drive for the first trial.
 - Your BitLocker recovery key if the disk is encrypted: changing the boot loader may ask for it. Save the key in advance.
@@ -71,17 +71,17 @@ The speed of the zones themselves does not change. What changes is which memory 
 Boot into Safe Mode: Settings > Recovery > Advanced startup > Troubleshoot > Advanced options > Startup Settings > press `4`. Run:
 
 ```
-python membench_phys.py --runs 5 --note "without SRAT"
+python scripts/membench_phys.py --runs 5 --note "without SRAT"
 ```
 
-This produces `membench_phys_<time>.csv` (the physical map) and `..._system.csv` (the allocation order). Details are in [membench_phys.md](membench_phys.md). Keep these files: they are your "before" state.
+This produces, in the `scripts` folder, `membench_phys_<time>.csv` (the physical map) and `..._system.csv` (the allocation order). Details are in [membench_phys.md](membench_phys.md). Keep these files: they are your "before" state.
 
 ## Step 3. Create the table
 
 In the same Safe Mode session, right after the measurement:
 
 ```
-python make_srat.py --csv membench_phys_<time>.csv --out SRAT.aml
+python scripts/make_srat.py --csv scripts/membench_phys_<time>.csv --out SRAT.aml
 ```
 
 The script finds the boundary from the read speed and reads the list of cores and the memory ranges from the system. It should report something like: `boundary 17 GiB, slow zone below it; 12 logical CPUs; 640 bytes`.
@@ -134,8 +134,8 @@ You should see `highest node: 1`, and the free memory of the nodes should roughl
 Again in Safe Mode, booted through OpenCore (Safe Mode is enabled the same way; the selection menu opens after OpenCore):
 
 ```
-python membench_phys.py --runs 5 --note "with SRAT"
-python membench_phys_order_plot.py <before>_system.csv <after>_system.csv --labels "Without SRAT" "With SRAT" --out compare.png
+python scripts/membench_phys.py --runs 5 --note "with SRAT"
+python scripts/membench_phys_order_plot.py scripts/<before>_system.csv scripts/<after>_system.csv --labels "Without SRAT" "With SRAT" --out compare.png
 ```
 
 In `compare.png`, the grey (slow) area of the SRAT variant should be one block at the end. The threshold is found automatically from the data; you can set it with `--slow-read` if needed.
@@ -176,8 +176,8 @@ To undo everything, boot through Windows Boot Manager and delete `S:\EFI\OC` and
 
 ## Going through this with an AI agent
 
-If you have an agent that can run commands on your computer (Claude Code, for example), give it this file along with the scripts and write:
+If you have an agent that can run commands on your computer (Claude Code, for example), give it this repository and write:
 
-> Read asymmetric-memory-guide.md and walk me through the steps. First collect system data, read-only: processor, sticks, boot mode, Secure Boot, BitLocker, `truncatememory`. Tell me whether the machine is suitable. Do not run commands that change the boot process, BIOS or EFI partition yourself: show them to me and explain them. I will run the test in Safe Mode myself and give you the CSV. Show me the output of `make_srat.py` and explain why the boundary is plausible before going further.
+> Read docs/asymmetric-memory-guide.md and walk me through the steps. First collect system data, read-only: processor, sticks, boot mode, Secure Boot, BitLocker, `truncatememory`. Tell me whether the machine is suitable. Do not run commands that change the boot process, BIOS or EFI partition yourself: show them to me and explain them. I will run the test in Safe Mode myself and give you the CSV. Show me the output of `make_srat.py` and explain why the boundary is plausible before going further.
 
 Reboots, BIOS settings and boot changes are best done yourself: an agent cannot help if the system does not start, so keep this guide open on your phone beforehand.
