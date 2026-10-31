@@ -13,9 +13,11 @@ Windows knows nothing about these zones and hands out pages from both of them mi
 
 ## What NUMA is
 
-NUMA (Non-Uniform Memory Access) describes a computer in which each processor reaches some memory faster than other memory. Processors and memory are grouped into nodes. An ACPI table called SRAT describes which processors and memory belong together. According to [Microsoft](https://learn.microsoft.com/en-us/windows/win32/procthread/numa-support), Windows tries to satisfy a memory request from within the node, and allocates from other nodes if necessary.
+NUMA (Non-Uniform Memory Access) describes a computer in which each processor reaches some memory faster than other memory. It is typical of systems with several processor sockets, but a single processor can have it too. Examples are Intel Xeon with [Sub-NUMA Clustering](https://www.intel.com/content/www/us/en/developer/articles/technical/xeon-processor-scalable-family-technical-overview.html), which splits a socket into two domains with one memory controller each, AMD EPYC with its [nodes-per-socket setting](https://infohub.delltechnologies.com/p/numa-configuration-settings-on-amd-epyc-2nd-generation/), and AMD Threadripper WX, where [only some dies have local memory access](https://ir.amd.com/news-events/press-releases/detail/855/amd-expands-2nd-generation-ryzen-threadripper-desktop-processor-line-up-powering-ultimate-computing-experiences-available-today-from-649). A processor reaches memory in [its own node faster than memory in a remote one](https://docs.kernel.org/mm/numa.html), because remote access goes through an interconnect.
 
-That behavior is what this project relies on: if the fast memory and all the cores form one node, and the slow memory forms another, fast memory goes out first. The charts below show this on the test machine.
+Processors and memory are grouped into nodes, and an ACPI table called SRAT describes which ones belong together. The operating system uses this to keep programs close to their memory: according to [Microsoft](https://learn.microsoft.com/en-us/windows/win32/procthread/numa-support), Windows tries to run threads in the same node as the memory they use and to satisfy a memory request from within the node, allocating from other nodes if necessary.
+
+The firmware of the test machine reports no NUMA nodes. Its asymmetric memory setup still makes some memory slower than the rest, because one zone uses two memory channels and the other uses one. This project uses NUMA nodes only to control allocation order: if the fast memory and all the cores form one node, and the slow memory forms another, fast memory goes out first. The charts below show this on the test machine.
 
 ## Why this takes a workaround
 
