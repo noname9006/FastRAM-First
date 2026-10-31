@@ -11,6 +11,18 @@ In some cases a system has an asymmetric memory setup, such as 3 × 16 GB. The m
 
 Windows knows nothing about these zones and hands out pages from both of them mixed together. A program can get slow memory even while plenty of fast memory is free.
 
+## What NUMA is
+
+NUMA (Non-Uniform Memory Access) is a way to describe a computer whose memory is not equally fast for every processor core. Cores and memory are grouped into nodes. The firmware reports the nodes to the operating system in an ACPI table called SRAT. By default, the operating system then tries to give a program memory from the node closest to the core it runs on, and uses other nodes only when that memory runs out.
+
+That allocation order is what this project relies on: if the fast memory and all the cores form one node, and the slow memory forms another, fast memory goes out first.
+
+## Why this takes a workaround
+
+Linux can emulate NUMA nodes with a kernel boot parameter (`numa=fake`, on kernels built with NUMA emulation support), so no firmware table is needed there.
+
+Windows has no such option. It only sees the nodes that the firmware reports, and a typical desktop system reports none. So the node layout has to come from a custom SRAT table, injected before Windows starts by a boot loader.
+
 ## The result
 
 The top chart shows the order in which Windows hands out memory without the table, and the bottom chart shows it with the table. Grey marks the slow zone. Fast memory now goes out first and slow memory last, while the speed of each zone stays the same.
